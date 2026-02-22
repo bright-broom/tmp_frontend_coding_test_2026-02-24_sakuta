@@ -1,18 +1,16 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import type { JReitBuilding } from '@/mocks/buildings.type';
+import type { Building } from '@/types';
+import { MAP_CONFIG } from '@/lib/constants';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 interface BuildingMapProps {
-  buildings: JReitBuilding[];
+  buildings: Building[];
   selectedId?: string | null;
   onMarkerClick?: (id: string) => void;
 }
-
-const DEFAULT_CENTER: [number, number] = [35.6762, 139.6503];
-const DEFAULT_ZOOM = 11;
 
 function createMarkerIcon(isSelected: boolean): L.DivIcon {
   const size = isSelected ? 32 : 24;
@@ -66,18 +64,16 @@ export function BuildingMap({ buildings, selectedId, onMarkerClick }: BuildingMa
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
 
-  // Initialize map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     mapRef.current = L.map(containerRef.current, {
       zoomControl: false,
-    }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    }).setView(MAP_CONFIG.DEFAULT_CENTER, MAP_CONFIG.DEFAULT_ZOOM);
 
     // Add zoom control to top-right
     L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
-    // Use a cleaner tile style
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',
@@ -92,11 +88,9 @@ export function BuildingMap({ buildings, selectedId, onMarkerClick }: BuildingMa
     };
   }, []);
 
-  // Update markers
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Clear existing markers
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current.clear();
 
@@ -120,7 +114,6 @@ export function BuildingMap({ buildings, selectedId, onMarkerClick }: BuildingMa
         zIndexOffset: isSelected ? 1000 : 0,
       }).addTo(mapRef.current!);
 
-      // Create popup content
       const popupContent = document.createElement('div');
       popupContent.innerHTML = `
         <div style="min-width: 220px; padding: 4px;">
@@ -157,7 +150,6 @@ export function BuildingMap({ buildings, selectedId, onMarkerClick }: BuildingMa
       markersRef.current.set(building.id, marker);
     });
 
-    // Fit bounds
     if (bounds.length > 0) {
       mapRef.current.fitBounds(bounds as L.LatLngBoundsExpression, {
         padding: [60, 60],
@@ -166,7 +158,6 @@ export function BuildingMap({ buildings, selectedId, onMarkerClick }: BuildingMa
     }
   }, [buildings, onMarkerClick, selectedId]);
 
-  // Update marker styles when selection changes
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
       const isSelected = id === selectedId;
@@ -185,7 +176,6 @@ export function BuildingMap({ buildings, selectedId, onMarkerClick }: BuildingMa
     <div className="h-full w-full relative">
       <div ref={containerRef} className="h-full w-full rounded-lg" />
 
-      {/* Empty State */}
       {buildings.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 backdrop-blur-sm rounded-lg">
           <div className="text-center">
@@ -201,7 +191,6 @@ export function BuildingMap({ buildings, selectedId, onMarkerClick }: BuildingMa
         </div>
       )}
 
-      {/* Map Legend */}
       {buildings.length > 0 && (
         <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg px-3 py-2 text-xs">
           <div className="flex items-center gap-2">
@@ -211,7 +200,6 @@ export function BuildingMap({ buildings, selectedId, onMarkerClick }: BuildingMa
         </div>
       )}
 
-      {/* Injection of marker animations */}
       <style jsx global>{`
         @keyframes ping {
           0% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }

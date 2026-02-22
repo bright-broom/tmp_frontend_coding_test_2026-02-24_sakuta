@@ -73,7 +73,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-// Functional error fallback component for specific sections
 export function ErrorFallback({
   title = 'データの読み込みに失敗しました',
   onRetry
@@ -103,7 +102,6 @@ export function ErrorFallback({
   );
 }
 
-// Loading component
 export function LoadingSpinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const sizeClasses = {
     sm: 'w-5 h-5 border-2',

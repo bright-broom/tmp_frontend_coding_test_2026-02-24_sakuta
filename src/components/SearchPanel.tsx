@@ -1,15 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import type { SearchFilters, AssetTypeKey } from '@/lib/buildingUtils';
-import { ASSET_TYPE_LABELS } from '@/lib/buildingUtils';
+import type { SearchFilters, AssetTypeKey } from '@/types';
+import { ASSET_TYPE_LABELS, ASSET_TYPE_KEYS } from '@/lib';
 
 interface SearchPanelProps {
   onSearch: (filters: SearchFilters) => void;
   isLoading?: boolean;
 }
-
-const ASSET_TYPE_KEYS = Object.keys(ASSET_TYPE_LABELS) as AssetTypeKey[];
 
 export function SearchPanel({ onSearch, isLoading = false }: SearchPanelProps) {
   const [keyword, setKeyword] = useState('');
@@ -40,7 +38,6 @@ export function SearchPanel({ onSearch, isLoading = false }: SearchPanelProps) {
 
   return (
     <form onSubmit={handleSubmit} suppressHydrationWarning>
-      {/* Search Input */}
       <div className="relative mb-4">
         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
           <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -68,7 +65,6 @@ export function SearchPanel({ onSearch, isLoading = false }: SearchPanelProps) {
         )}
       </div>
 
-      {/* Asset Type Chips */}
       <div className="mb-4">
         <p className="section-title">アセットタイプ</p>
         <div className="flex flex-wrap gap-2">
@@ -88,7 +84,6 @@ export function SearchPanel({ onSearch, isLoading = false }: SearchPanelProps) {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-2">
         <button
           type="submit"

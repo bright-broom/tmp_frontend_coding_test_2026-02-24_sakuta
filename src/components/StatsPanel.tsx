@@ -1,10 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { JReitBuilding } from '@/mocks/buildings.type';
+import type { Building } from '@/types';
 
 interface StatsPanelProps {
-  buildings: JReitBuilding[];
+  buildings: Building[];
 }
 
 export function StatsPanel({ buildings }: StatsPanelProps) {
@@ -36,13 +36,11 @@ export function StatsPanel({ buildings }: StatsPanelProps) {
 
   return (
     <div className="grid grid-cols-3 gap-4">
-      {/* Building Count */}
       <div className="text-center">
         <div className="stat-value text-blue-600">{stats.count}</div>
         <div className="stat-label">件</div>
       </div>
 
-      {/* Average Cap Rate */}
       <div className="text-center border-l border-r border-gray-100">
         <div className="stat-value text-gray-900">
           {stats.avgCapRate > 0 ? stats.avgCapRate.toFixed(2) : '-'}
@@ -51,7 +49,6 @@ export function StatsPanel({ buildings }: StatsPanelProps) {
         <div className="stat-label">平均CR</div>
       </div>
 
-      {/* Average Occupancy */}
       <div className="text-center">
         <div className="stat-value text-emerald-600">
           {stats.avgOccupancy > 0 ? stats.avgOccupancy.toFixed(1) : '-'}

@@ -1,19 +1,13 @@
 'use client';
 
-import type { JReitBuilding } from '@/mocks/buildings.type';
-import { ASSET_TYPE_LABELS, type AssetTypeKey } from '@/lib/buildingUtils';
+import type { Building } from '@/types';
+import { getAssetTypeLabels } from '@/lib';
 
 interface BuildingListProps {
-  buildings: JReitBuilding[];
+  buildings: Building[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onDetail?: (id: string) => void;
-}
-
-function getAssetTypeLabels(assetType: JReitBuilding['assetType']): string[] {
-  return (Object.keys(assetType) as AssetTypeKey[])
-    .filter((key) => assetType[key])
-    .map((key) => ASSET_TYPE_LABELS[key]);
 }
 
 export function BuildingList({ buildings, selectedId, onSelect, onDetail }: BuildingListProps) {
@@ -34,7 +28,7 @@ export function BuildingList({ buildings, selectedId, onSelect, onDetail }: Buil
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto" role="listbox" aria-label="建物一覧">
       <div className="px-3 py-2">
         {buildings.map((building, index) => {
           const isSelected = building.id === selectedId;
@@ -43,6 +37,8 @@ export function BuildingList({ buildings, selectedId, onSelect, onDetail }: Buil
           return (
             <div
               key={building.id}
+              role="option"
+              aria-selected={isSelected}
               className={`
                 p-3 rounded-lg mb-1.5 transition-all duration-150
                 ${isSelected
@@ -55,9 +51,9 @@ export function BuildingList({ buildings, selectedId, onSelect, onDetail }: Buil
               <button
                 onClick={() => onSelect(building.id)}
                 className="w-full text-left"
+                aria-label={`${building.buildingSpec.name}を選択`}
               >
                 <div className="flex items-start gap-3">
-                  {/* Building Number */}
                   <div className={`
                     w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 text-xs font-semibold
                     ${isSelected ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}
@@ -65,7 +61,6 @@ export function BuildingList({ buildings, selectedId, onSelect, onDetail }: Buil
                     {index + 1}
                   </div>
 
-                  {/* Building Info */}
                   <div className="flex-1 min-w-0">
                     <h4 className={`text-sm font-medium truncate ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
                       {building.buildingSpec.name}
@@ -74,7 +69,6 @@ export function BuildingList({ buildings, selectedId, onSelect, onDetail }: Buil
                       {building.buildingSpec.address}
                     </p>
 
-                    {/* Asset Type Tags */}
                     <div className="flex flex-wrap gap-1 mt-2">
                       {assetTypes.slice(0, 2).map((type) => (
                         <span
@@ -92,7 +86,6 @@ export function BuildingList({ buildings, selectedId, onSelect, onDetail }: Buil
                     </div>
                   </div>
 
-                  {/* Cap Rate */}
                   <div className="text-right flex-shrink-0">
                     <div className={`text-sm font-semibold ${isSelected ? 'text-blue-600' : 'text-gray-900'}`}>
                       {building.yieldEvaluation.capRate}%
@@ -102,7 +95,6 @@ export function BuildingList({ buildings, selectedId, onSelect, onDetail }: Buil
                 </div>
               </button>
 
-              {/* Detail Button - Show on selection */}
               {isSelected && onDetail && (
                 <button
                   onClick={(e) => {

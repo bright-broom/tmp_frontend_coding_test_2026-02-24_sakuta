@@ -11,16 +11,16 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import type { JReitBuilding } from '@/mocks/buildings.type';
+import type { Building } from '@/types';
 import {
   getCapRateChartData,
   getOccupancyRateChartData,
   calculateAverage,
   formatDate,
-} from '@/lib/buildingUtils';
+} from '@/lib';
 
 interface AnalyticsPanelProps {
-  buildings: JReitBuilding[];
+  buildings: Building[];
   isExpanded: boolean;
   onToggle: () => void;
 }
@@ -44,7 +44,6 @@ export function AnalyticsPanel({ buildings, isExpanded, onToggle }: AnalyticsPan
 
   return (
     <div className={`card transition-all duration-300 ${isExpanded ? 'h-[280px]' : 'h-14'}`}>
-      {/* Header */}
       <button
         onClick={onToggle}
         className="w-full h-14 px-5 flex items-center justify-between hover:bg-gray-50 transition-colors rounded-t-lg"
@@ -57,7 +56,6 @@ export function AnalyticsPanel({ buildings, isExpanded, onToggle }: AnalyticsPan
           </div>
           <span className="font-semibold text-gray-900">分析グラフ</span>
 
-          {/* Mini Stats when collapsed */}
           {!isExpanded && (
             <div className="flex items-center gap-4 ml-4">
               <span className="text-sm">
@@ -82,10 +80,8 @@ export function AnalyticsPanel({ buildings, isExpanded, onToggle }: AnalyticsPan
         </svg>
       </button>
 
-      {/* Charts Container */}
       {isExpanded && (
         <div className="h-[calc(100%-56px)] px-5 pb-4 grid grid-cols-2 gap-6 animate-fade-in">
-          {/* Cap Rate Chart */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-gray-700">キャップレート推移</h3>
@@ -151,7 +147,6 @@ export function AnalyticsPanel({ buildings, isExpanded, onToggle }: AnalyticsPan
             </div>
           </div>
 
-          {/* Occupancy Rate Chart */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-gray-700">稼働率推移</h3>
