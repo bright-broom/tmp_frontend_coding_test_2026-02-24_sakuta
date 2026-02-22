@@ -4,10 +4,17 @@ import {
   getOccupancyRateChartData,
   calculateAverage,
   formatDate,
-} from '@/lib/buildingUtils';
-import type { JReitBuilding } from '@/mocks/buildings.type';
+  formatDateJP,
+  formatPrice,
+  formatArea,
+  formatCapRate,
+  formatOccupancyRate,
+  getAssetTypeLabels,
+  countAssetTypes,
+} from '@/lib';
+import type { Building } from '@/types';
 
-const mockBuilding: JReitBuilding = {
+const mockBuilding: Building = {
   id: 'test-building-1',
   acquisition: {
     acquisitionPrice: 1000000000,
@@ -54,7 +61,7 @@ const mockBuilding: JReitBuilding = {
   ],
 };
 
-const mockBuilding2: JReitBuilding = {
+const mockBuilding2: Building = {
   ...mockBuilding,
   id: 'test-building-2',
   buildingSpec: {
@@ -199,5 +206,136 @@ describe('formatDate', () => {
   it('formats date string to YYYY/MM format', () => {
     expect(formatDate('2020-06-30')).toBe('2020/06');
     expect(formatDate('2021-12-31')).toBe('2021/12');
+  });
+});
+
+describe('formatDateJP', () => {
+  it('formats date string to Japanese format', () => {
+    expect(formatDateJP('2020-06-15')).toBe('2020年6月15日');
+    expect(formatDateJP('2021-12-01')).toBe('2021年12月1日');
+  });
+
+  it('returns dash for null', () => {
+    expect(formatDateJP(null)).toBe('-');
+  });
+});
+
+describe('formatPrice', () => {
+  it('formats price in billions (億円)', () => {
+    expect(formatPrice(100000000)).toBe('1億円');
+    expect(formatPrice(500000000)).toBe('5億円');
+  });
+
+  it('formats price with both billions and ten thousands (億万円)', () => {
+    expect(formatPrice(150000000)).toBe('1億5,000万円');
+    expect(formatPrice(123456000)).toBe('1億2,345万円');
+  });
+
+  it('formats price in ten thousands (万円)', () => {
+    expect(formatPrice(10000)).toBe('1万円');
+    expect(formatPrice(50000000)).toBe('5,000万円');
+  });
+
+  it('formats small prices in yen (円)', () => {
+    expect(formatPrice(1000)).toBe('1,000円');
+    expect(formatPrice(9999)).toBe('9,999円');
+  });
+});
+
+describe('formatArea', () => {
+  it('formats area with m² unit', () => {
+    expect(formatArea('1000.00')).toBe('1,000 m²');
+    expect(formatArea('1234.56')).toBe('1,234.56 m²');
+  });
+});
+
+describe('formatCapRate', () => {
+  it('formats cap rate with % suffix', () => {
+    expect(formatCapRate(4.5)).toBe('4.50%');
+    expect(formatCapRate(5.123)).toBe('5.12%');
+  });
+
+  it('allows custom decimals', () => {
+    expect(formatCapRate(4.567, 1)).toBe('4.6%');
+    expect(formatCapRate(4.567, 3)).toBe('4.567%');
+  });
+});
+
+describe('formatOccupancyRate', () => {
+  it('formats occupancy rate with % suffix (default 2 decimals)', () => {
+    expect(formatOccupancyRate(98.5)).toBe('98.50%');
+    expect(formatOccupancyRate(100)).toBe('100.00%');
+  });
+
+  it('allows custom decimals', () => {
+    expect(formatOccupancyRate(98.567, 1)).toBe('98.6%');
+  });
+});
+
+describe('getAssetTypeLabels', () => {
+  it('returns labels for active asset types', () => {
+    const assetType = {
+      isOffice: true,
+      isRetail: true,
+      isHotel: false,
+      isParking: false,
+      isIndustrial: false,
+      isLogistic: false,
+      isResidential: false,
+      isHealthCare: false,
+      isOther: false,
+    };
+    const labels = getAssetTypeLabels(assetType);
+    expect(labels).toContain('オフィス');
+    expect(labels).toContain('商業施設');
+    expect(labels).toHaveLength(2);
+  });
+
+  it('returns empty array for no active types', () => {
+    const assetType = {
+      isOffice: false,
+      isRetail: false,
+      isHotel: false,
+      isParking: false,
+      isIndustrial: false,
+      isLogistic: false,
+      isResidential: false,
+      isHealthCare: false,
+      isOther: false,
+    };
+    const labels = getAssetTypeLabels(assetType);
+    expect(labels).toHaveLength(0);
+  });
+});
+
+describe('countAssetTypes', () => {
+  it('counts active asset types', () => {
+    const assetType = {
+      isOffice: true,
+      isRetail: true,
+      isHotel: true,
+      isParking: false,
+      isIndustrial: false,
+      isLogistic: false,
+      isResidential: false,
+      isHealthCare: false,
+      isOther: false,
+    };
+    expect(countAssetTypes(assetType)).toBe(3);
+  });
+
+  it('returns 0 for no active types', () => {
+    const assetType = {
+      isOffice: false,
+      isRetail: false,
+      isHotel: false,
+      isParking: false,
+      isIndustrial: false,
+      isLogistic: false,
+      isResidential: false,
+      isHealthCare: false,
+      isOther: false,
+    };
+    expect(countAssetTypes(assetType)).toBe(0);
   });
 });
