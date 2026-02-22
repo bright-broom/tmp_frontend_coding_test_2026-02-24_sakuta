@@ -1,30 +1,24 @@
-import type { JReitBuilding } from '@/mocks/buildings.type';
+/**
+ * Building Utilities - 建物データ処理ユーティリティ
+ * @module lib/buildingUtils
+ */
 
-export type AssetTypeKey = keyof JReitBuilding['assetType'];
+import type {
+  Building,
+  SearchFilters,
+  ChartDataPoint,
+  AssetTypeKey,
+} from '@/types';
+import { ASSET_TYPE_LABELS, ASSET_TYPE_KEYS, FORMAT } from './constants';
 
-export const ASSET_TYPE_LABELS: Record<AssetTypeKey, string> = {
-  isOffice: 'オフィス',
-  isRetail: '商業施設',
-  isHotel: 'ホテル',
-  isParking: '駐車場',
-  isIndustrial: '工場',
-  isLogistic: '物流施設',
-  isResidential: '住宅',
-  isHealthCare: '医療施設',
-  isOther: 'その他',
-};
-
-export interface SearchFilters {
-  keyword: string;
-  assetTypes: AssetTypeKey[];
-}
+export { ASSET_TYPE_LABELS, ASSET_TYPE_KEYS };
+export type { SearchFilters, AssetTypeKey };
 
 export function filterBuildings(
-  buildings: JReitBuilding[],
+  buildings: Building[],
   filters: SearchFilters
-): JReitBuilding[] {
+): Building[] {
   return buildings.filter((building) => {
-    // Keyword search (name or address)
     if (filters.keyword) {
       const keyword = filters.keyword.toLowerCase();
       const nameMatch = building.buildingSpec.name.toLowerCase().includes(keyword);
@@ -34,7 +28,7 @@ export function filterBuildings(
       }
     }
 
-    // Asset type filter
+    // OR条件: いずれかのアセットタイプに一致すればOK
     if (filters.assetTypes.length > 0) {
       const hasMatchingType = filters.assetTypes.some(
         (assetType) => building.assetType[assetType]
@@ -48,17 +42,10 @@ export function filterBuildings(
   });
 }
 
-export interface ChartDataPoint {
-  date: string;
-  value: number;
-}
-
-export function getCapRateChartData(buildings: JReitBuilding[]): ChartDataPoint[] {
+export function getCapRateChartData(buildings: Building[]): ChartDataPoint[] {
   if (buildings.length === 0) return [];
 
-  // Collect all cap rate histories with dates
   const allHistories: { date: string; capRate: number }[] = [];
-
   buildings.forEach((building) => {
     building.capRateHistories.forEach((history) => {
       allHistories.push({
@@ -68,7 +55,6 @@ export function getCapRateChartData(buildings: JReitBuilding[]): ChartDataPoint[
     });
   });
 
-  // Group by date and calculate average
   const dateMap = new Map<string, number[]>();
   allHistories.forEach(({ date, capRate }) => {
     if (!dateMap.has(date)) {
@@ -77,30 +63,22 @@ export function getCapRateChartData(buildings: JReitBuilding[]): ChartDataPoint[
     dateMap.get(date)!.push(capRate);
   });
 
-  // Calculate averages and sort by date
-  const chartData: ChartDataPoint[] = Array.from(dateMap.entries())
+  return Array.from(dateMap.entries())
     .map(([date, rates]) => ({
       date,
       value: rates.reduce((sum, rate) => sum + rate, 0) / rates.length,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
-
-  return chartData;
 }
 
-export function getOccupancyRateChartData(buildings: JReitBuilding[]): ChartDataPoint[] {
+export function getOccupancyRateChartData(buildings: Building[]): ChartDataPoint[] {
   if (buildings.length === 0) return [];
 
-  // Collect all occupancy rates with dates from capRateHistories
   const allData: { date: string; occupancyRate: number }[] = [];
-
   buildings.forEach((building) => {
     const { capRateHistories, financials } = building;
-
-    // Match financials with capRateHistories by index
-    // Only include indices where both exist
+    // financialsには日付がないため、capRateHistoriesの日付を使用
     const minLength = Math.min(capRateHistories.length, financials.length);
-
     for (let i = 0; i < minLength; i++) {
       allData.push({
         date: capRateHistories[i].closingDate,
@@ -109,7 +87,6 @@ export function getOccupancyRateChartData(buildings: JReitBuilding[]): ChartData
     }
   });
 
-  // Group by date and calculate average
   const dateMap = new Map<string, number[]>();
   allData.forEach(({ date, occupancyRate }) => {
     if (!dateMap.has(date)) {
@@ -118,15 +95,12 @@ export function getOccupancyRateChartData(buildings: JReitBuilding[]): ChartData
     dateMap.get(date)!.push(occupancyRate);
   });
 
-  // Calculate averages and sort by date
-  const chartData: ChartDataPoint[] = Array.from(dateMap.entries())
+  return Array.from(dateMap.entries())
     .map(([date, rates]) => ({
       date,
       value: rates.reduce((sum, rate) => sum + rate, 0) / rates.length,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
-
-  return chartData;
 }
 
 export function calculateAverage(data: ChartDataPoint[]): number {
@@ -137,4 +111,48 @@ export function calculateAverage(data: ChartDataPoint[]): number {
 export function formatDate(dateString: string): string {
   const [year, month] = dateString.split('-');
   return `${year}/${month}`;
+}
+
+export function formatDateJP(dateString: string | null): string {
+  if (!dateString) return '-';
+  const [year, month, day] = dateString.split('-');
+  return `${year}年${parseInt(month)}月${parseInt(day)}日`;
+}
+
+export function formatPrice(price: number): string {
+  if (price >= 100000000) {
+    const oku = Math.floor(price / 100000000);
+    const man = Math.floor((price % 100000000) / 10000);
+    if (man > 0) {
+      return `${oku}億${man.toLocaleString()}万円`;
+    }
+    return `${oku}億円`;
+  }
+  if (price >= 10000) {
+    return `${Math.floor(price / 10000).toLocaleString()}万円`;
+  }
+  return `${price.toLocaleString()}円`;
+}
+
+export function formatArea(area: string): string {
+  const num = parseFloat(area);
+  return `${num.toLocaleString()} m²`;
+}
+
+export function formatCapRate(rate: number, decimals = FORMAT.CAP_RATE_DECIMALS): string {
+  return `${rate.toFixed(decimals)}%`;
+}
+
+export function formatOccupancyRate(rate: number, decimals = FORMAT.OCCUPANCY_DECIMALS): string {
+  return `${rate.toFixed(decimals)}%`;
+}
+
+export function getAssetTypeLabels(assetType: Building['assetType']): string[] {
+  return ASSET_TYPE_KEYS
+    .filter((key) => assetType[key])
+    .map((key) => ASSET_TYPE_LABELS[key]);
+}
+
+export function countAssetTypes(assetType: Building['assetType']): number {
+  return ASSET_TYPE_KEYS.filter((key) => assetType[key]).length;
 }
