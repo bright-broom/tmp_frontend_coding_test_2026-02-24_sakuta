@@ -37,7 +37,7 @@ export function SearchForm({ onSearch }: SearchFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-4">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-4" suppressHydrationWarning>
       <h2 className="text-lg font-semibold mb-4 text-gray-800">建物検索</h2>
 
       <div className="mb-4">
@@ -51,6 +51,7 @@ export function SearchForm({ onSearch }: SearchFormProps) {
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="例: 渋谷、オフィス"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+          suppressHydrationWarning
         />
       </div>
 
