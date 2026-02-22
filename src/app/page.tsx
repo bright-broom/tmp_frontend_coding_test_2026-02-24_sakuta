@@ -9,8 +9,7 @@ import { AnalyticsPanel } from '@/components/AnalyticsPanel';
 import { BuildingDetailModal } from '@/components/BuildingDetailModal';
 import { ErrorBoundary, LoadingState } from '@/components/ErrorBoundary';
 import { fetchBuildings } from '@/actions/buildings';
-import type { SearchFilters } from '@/lib/buildingUtils';
-import type { JReitBuilding } from '@/mocks/buildings.type';
+import type { Building, SearchFilters } from '@/types';
 
 const BuildingMap = dynamic(
   () => import('@/components/BuildingMap').then((mod) => mod.BuildingMap),
@@ -25,7 +24,7 @@ const BuildingMap = dynamic(
 );
 
 export default function Home() {
-  const [buildings, setBuildings] = useState<JReitBuilding[]>([]);
+  const [buildings, setBuildings] = useState<Building[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [detailBuildingId, setDetailBuildingId] = useState<string | null>(null);
@@ -73,7 +72,6 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-[var(--background)]">
-        {/* Mobile Header */}
         <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
@@ -98,7 +96,6 @@ export default function Home() {
           </button>
         </header>
 
-        {/* Mobile Overlay */}
         {isMobileMenuOpen && (
           <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
@@ -106,7 +103,6 @@ export default function Home() {
           />
         )}
 
-        {/* Left Panel - Sidebar */}
         <aside className={`
           fixed lg:relative inset-y-0 left-0 z-50
           w-[85vw] sm:w-[380px] lg:w-[var(--sidebar-width)]
@@ -115,7 +111,6 @@ export default function Home() {
           transform transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
-          {/* Desktop Header */}
           <header className="hidden lg:flex h-[var(--header-height)] items-center px-6 border-b border-[var(--border-light)]">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
@@ -130,7 +125,6 @@ export default function Home() {
             </div>
           </header>
 
-          {/* Mobile Close Button */}
           <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="text-sm font-medium text-gray-700">検索・フィルター</span>
             <button
@@ -143,19 +137,16 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Search Panel */}
           <div className="p-4 lg:p-5 border-b border-[var(--border-light)]">
             <SearchPanel onSearch={handleSearch} isLoading={isPending} />
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="mx-4 lg:mx-5 mt-4 p-3 bg-red-50 border border-red-100 rounded-lg">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
-          {/* Results Section */}
           <div className="flex-1 flex flex-col min-h-0">
             {isPending && (
               <div className="flex-1 flex items-center justify-center">
@@ -197,9 +188,7 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Right Panel - Map & Analytics */}
         <main className="flex-1 flex flex-col min-w-0 p-2 sm:p-4 gap-2 sm:gap-4 pt-0 lg:pt-4">
-          {/* Map Container */}
           <div className="flex-1 min-h-[300px] lg:min-h-0 card overflow-hidden">
             <ErrorBoundary
               fallback={
@@ -224,7 +213,6 @@ export default function Home() {
             </ErrorBoundary>
           </div>
 
-          {/* Analytics Panel */}
           {hasSearched && buildings.length > 0 && (
             <div className="flex-shrink-0">
               <AnalyticsPanel
@@ -236,7 +224,6 @@ export default function Home() {
           )}
         </main>
 
-        {/* Building Detail Modal */}
         {selectedBuilding && (
           <BuildingDetailModal
             building={selectedBuilding}
