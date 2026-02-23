@@ -1,114 +1,117 @@
 'use client';
 
 import { useState } from 'react';
-import type { SearchFilters, AssetTypeKey } from '@/types';
-import { ASSET_TYPE_LABELS, ASSET_TYPE_KEYS } from '@/lib';
+import type { SearchFilters, RangeFilter } from '@/types';
 
 interface SearchPanelProps {
   onSearch: (filters: SearchFilters) => void;
+  onReset: () => void;
   isLoading?: boolean;
 }
 
-export function SearchPanel({ onSearch, isLoading = false }: SearchPanelProps) {
-  const [keyword, setKeyword] = useState('');
-  const [selectedAssetTypes, setSelectedAssetTypes] = useState<AssetTypeKey[]>([]);
+const emptyRange: RangeFilter = { min: '', max: '' };
 
-  const handleAssetTypeToggle = (assetType: AssetTypeKey) => {
-    setSelectedAssetTypes((prev) =>
-      prev.includes(assetType)
-        ? prev.filter((t) => t !== assetType)
-        : [...prev, assetType]
-    );
-  };
+const defaultFilters: SearchFilters = {
+  keyword: '',
+  assetTypes: [],
+  occupancyRate: emptyRange,
+  appraisalPrice: emptyRange,
+  capRate: emptyRange,
+};
+
+interface RangeInputProps {
+  label: string;
+  unit: string;
+  value: RangeFilter;
+  onChange: (value: RangeFilter) => void;
+}
+
+function RangeInput({ label, unit, value, onChange }: RangeInputProps) {
+  return (
+    <div className="mb-6">
+      <label className="block text-sm text-[#757575] mb-2">{label}</label>
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          inputMode="numeric"
+          value={value.min}
+          onChange={(e) => onChange({ ...value, min: e.target.value })}
+          className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded text-sm text-[#333333] focus:outline-none focus:border-[#98A2FF] focus:ring-1 focus:ring-[#98A2FF]"
+          placeholder=""
+          suppressHydrationWarning
+        />
+        <span className="text-[#757575] text-sm flex-shrink-0">〜</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={value.max}
+          onChange={(e) => onChange({ ...value, max: e.target.value })}
+          className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded text-sm text-[#333333] focus:outline-none focus:border-[#98A2FF] focus:ring-1 focus:ring-[#98A2FF]"
+          placeholder=""
+          suppressHydrationWarning
+        />
+        <span className="text-sm text-[#757575] flex-shrink-0">{unit}</span>
+      </div>
+    </div>
+  );
+}
+
+export function SearchPanel({ onSearch, onReset, isLoading = false }: SearchPanelProps) {
+  const [filters, setFilters] = useState<SearchFilters>(defaultFilters);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch({
-      keyword,
-      assetTypes: selectedAssetTypes,
-    });
+    onSearch(filters);
   };
 
-  const handleClear = () => {
-    setKeyword('');
-    setSelectedAssetTypes([]);
+  const handleReset = () => {
+    setFilters(defaultFilters);
+    onReset();
   };
-
-  const hasFilters = keyword.length > 0 || selectedAssetTypes.length > 0;
 
   return (
-    <form onSubmit={handleSubmit} suppressHydrationWarning>
-      <div className="relative mb-4">
-        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        <input
-          type="text"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          placeholder="建物名・住所で検索..."
-          className="input-field pl-10 pr-10"
-          suppressHydrationWarning
+    <form onSubmit={handleSubmit} className="flex flex-col h-full" suppressHydrationWarning>
+      {/* 入力フォーム群 */}
+      <div className="flex-1">
+        <RangeInput
+          label="稼働率"
+          unit="%"
+          value={filters.occupancyRate}
+          onChange={(occupancyRate) => setFilters({ ...filters, occupancyRate })}
         />
-        {keyword && (
-          <button
-            type="button"
-            onClick={() => setKeyword('')}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
+
+        <RangeInput
+          label="最新鑑定評価額"
+          unit="百万円"
+          value={filters.appraisalPrice}
+          onChange={(appraisalPrice) => setFilters({ ...filters, appraisalPrice })}
+        />
+
+        <RangeInput
+          label="最新CR"
+          unit="%"
+          value={filters.capRate}
+          onChange={(capRate) => setFilters({ ...filters, capRate })}
+        />
       </div>
 
-      <div className="mb-4">
-        <p className="section-title">アセットタイプ</p>
-        <div className="flex flex-wrap gap-2">
-          {ASSET_TYPE_KEYS.map((assetType) => {
-            const isActive = selectedAssetTypes.includes(assetType);
-            return (
-              <button
-                key={assetType}
-                type="button"
-                onClick={() => handleAssetTypeToggle(assetType)}
-                className={`chip ${isActive ? 'chip-active' : 'chip-default'}`}
-              >
-                {ASSET_TYPE_LABELS[assetType]}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="flex gap-2">
+      {/* アクションエリア（下部固定） */}
+      <div className="mt-auto">
         <button
           type="submit"
           disabled={isLoading}
-          className="btn-primary flex-1 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 bg-[#98A2FF] hover:bg-[#8592F0] text-white font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              検索中...
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              検索
-            </>
-          )}
+          {isLoading ? '検索中...' : '検索'}
         </button>
-        {hasFilters && !isLoading && (
-          <button type="button" onClick={handleClear} className="btn-secondary">
-            クリア
-          </button>
-        )}
+
+        <button
+          type="button"
+          onClick={handleReset}
+          className="mt-3 text-sm text-[#9E9E9E] hover:text-[#757575] transition-colors"
+        >
+          検索結果をリセット
+        </button>
       </div>
     </form>
   );
