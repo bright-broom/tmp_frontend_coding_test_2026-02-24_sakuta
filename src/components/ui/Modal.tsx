@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useFocusTrap } from '@/hooks';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
@@ -48,6 +49,8 @@ export function Modal({
   closeOnEsc = true,
   className = '',
 }: ModalProps) {
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(isOpen);
+
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
       if (closeOnEsc && e.key === 'Escape') {
@@ -81,7 +84,8 @@ export function Modal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      ref={focusTrapRef}
+      className="fixed inset-0 z-modal flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? 'modal-title' : undefined}
@@ -150,6 +154,7 @@ export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
