@@ -1,5 +1,16 @@
 import { filterBuildings } from '@/lib';
-import type { Building } from '@/types';
+import type { Building, SearchFilters } from '@/types';
+
+const emptyRange = { min: '', max: '' };
+
+const createFilters = (partial: Partial<SearchFilters>): SearchFilters => ({
+  keyword: '',
+  assetTypes: [],
+  occupancyRate: emptyRange,
+  appraisalPrice: emptyRange,
+  capRate: emptyRange,
+  ...partial,
+});
 
 const mockBuilding: Building = {
   id: 'test-building-1',
@@ -75,78 +86,78 @@ describe('Server Action filtering logic', () => {
 
   describe('empty filters', () => {
     it('returns all buildings when filters are empty', () => {
-      const result = filterBuildings(buildings, { keyword: '', assetTypes: [] });
+      const result = filterBuildings(buildings, createFilters({}));
       expect(result).toHaveLength(3);
     });
   });
 
   describe('keyword filtering', () => {
     it('filters by building name', () => {
-      const result = filterBuildings(buildings, { keyword: '渋谷', assetTypes: [] });
+      const result = filterBuildings(buildings, createFilters({ keyword: '渋谷' }));
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('test-building-1');
     });
 
     it('filters by address', () => {
-      const result = filterBuildings(buildings, { keyword: '大阪', assetTypes: [] });
+      const result = filterBuildings(buildings, createFilters({ keyword: '大阪' }));
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('test-building-2');
     });
 
     it('filters by partial match', () => {
-      const result = filterBuildings(buildings, { keyword: '東京', assetTypes: [] });
+      const result = filterBuildings(buildings, createFilters({ keyword: '東京' }));
       expect(result).toHaveLength(2); // 渋谷(東京都) and ホテル東京(東京都港区)
     });
 
     it('is case insensitive', () => {
-      const result = filterBuildings(buildings, { keyword: 'テスト', assetTypes: [] });
+      const result = filterBuildings(buildings, createFilters({ keyword: 'テスト' }));
       expect(result).toHaveLength(2); // テストビル渋谷, テストビル大阪
     });
 
     it('returns empty array when no matches', () => {
-      const result = filterBuildings(buildings, { keyword: '福岡', assetTypes: [] });
+      const result = filterBuildings(buildings, createFilters({ keyword: '福岡' }));
       expect(result).toHaveLength(0);
     });
   });
 
   describe('asset type filtering', () => {
     it('filters by single asset type', () => {
-      const result = filterBuildings(buildings, { keyword: '', assetTypes: ['isOffice'] });
+      const result = filterBuildings(buildings, createFilters({ assetTypes: ['isOffice'] }));
       expect(result).toHaveLength(1);
       expect(result[0].assetType.isOffice).toBe(true);
     });
 
     it('filters by multiple asset types (OR logic)', () => {
-      const result = filterBuildings(buildings, { keyword: '', assetTypes: ['isOffice', 'isRetail'] });
+      const result = filterBuildings(buildings, createFilters({ assetTypes: ['isOffice', 'isRetail'] }));
       expect(result).toHaveLength(2);
     });
 
     it('filters by hotel asset type', () => {
-      const result = filterBuildings(buildings, { keyword: '', assetTypes: ['isHotel'] });
+      const result = filterBuildings(buildings, createFilters({ assetTypes: ['isHotel'] }));
       expect(result).toHaveLength(1);
       expect(result[0].buildingSpec.name).toBe('ホテル東京');
     });
 
     it('returns empty array when no asset type matches', () => {
-      const result = filterBuildings(buildings, { keyword: '', assetTypes: ['isParking'] });
+      const result = filterBuildings(buildings, createFilters({ assetTypes: ['isParking'] }));
       expect(result).toHaveLength(0);
     });
   });
 
   describe('combined filtering', () => {
     it('combines keyword and asset type filters', () => {
-      const result = filterBuildings(buildings, { keyword: '東京', assetTypes: ['isOffice'] });
+      const result = filterBuildings(buildings, createFilters({ keyword: '東京', assetTypes: ['isOffice'] }));
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('test-building-1');
     });
 
     it('returns empty when keyword matches but asset type does not', () => {
-      const result = filterBuildings(buildings, { keyword: '渋谷', assetTypes: ['isHotel'] });
+      const result = filterBuildings(buildings, createFilters({ keyword: '渋谷', assetTypes: ['isHotel'] }));
       expect(result).toHaveLength(0);
     });
 
     it('returns empty when asset type matches but keyword does not', () => {
-      const result = filterBuildings(buildings, { keyword: '福岡', assetTypes: ['isOffice'] });
+      const result = filterBuildings(buildings, createFilters({ keyword: '福岡', assetTypes: ['isOffice'] }));
       expect(result).toHaveLength(0);
     });
   });

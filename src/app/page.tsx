@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback, useTransition } from 'react';
 import dynamic from 'next/dynamic';
 import { SearchPanel } from '@/components/SearchPanel';
 import { BuildingList } from '@/components/BuildingList';
-import { StatsPanel } from '@/components/StatsPanel';
 import { AnalyticsPanel } from '@/components/AnalyticsPanel';
 import { BuildingDetailModal } from '@/components/BuildingDetailModal';
 import { ErrorBoundary, LoadingState } from '@/components/ErrorBoundary';
@@ -16,22 +15,23 @@ const BuildingMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-full w-full flex items-center justify-center bg-gray-100 rounded-xl">
+      <div className="h-full w-full flex items-center justify-center bg-gray-100">
         <LoadingState message="マップを読み込み中..." />
       </div>
     ),
   }
 );
 
+type TabType = 'map' | 'analysis';
+
 export default function Home() {
   const [buildings, setBuildings] = useState<Building[]>([]);
-  const [hasSearched, setHasSearched] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [detailBuildingId, setDetailBuildingId] = useState<string | null>(null);
-  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('map');
   const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const selectedBuilding = useMemo(() => {
     if (!detailBuildingId) return null;
@@ -44,186 +44,144 @@ export default function Home() {
       const response = await fetchBuildings(filters);
       if (response.success) {
         setBuildings(response.data);
-        setHasSearched(true);
         setSelectedBuildingId(null);
-        if (filters.keyword || filters.assetTypes.length > 0) {
-          setShowAnalytics(true);
-        }
-        // Close mobile menu after search
-        setIsMobileMenuOpen(false);
+        setHasSearched(true);
       } else {
         setError(response.error || 'データの取得に失敗しました');
+        setHasSearched(true);
       }
     });
   }, []);
 
-  const handleBuildingSelect = useCallback((buildingId: string) => {
-    setSelectedBuildingId((prev) => (prev === buildingId ? null : buildingId));
+  const handleReset = useCallback(() => {
+    setBuildings([]);
+    setSelectedBuildingId(null);
+    setDetailBuildingId(null);
+    setError(null);
+    setHasSearched(false);
   }, []);
 
-  const handleBuildingDetail = useCallback((buildingId: string) => {
+  const handleBuildingClick = useCallback((buildingId: string) => {
     setDetailBuildingId(buildingId);
+    setSelectedBuildingId(buildingId);
   }, []);
 
   const handleCloseDetail = useCallback(() => {
     setDetailBuildingId(null);
   }, []);
 
+  const handleMarkerClick = useCallback((buildingId: string) => {
+    setSelectedBuildingId(buildingId);
+  }, []);
+
+  const handleBuildingSelect = useCallback((buildingId: string) => {
+    setSelectedBuildingId(buildingId);
+  }, []);
+
   return (
     <ErrorBoundary>
-      <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-[var(--background)]">
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <h1 className="text-base font-bold text-gray-900">J-REIT Analytics</h1>
-          </div>
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="メニュー"
-          >
-            <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {isMobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </header>
-
-        {isMobileMenuOpen && (
-          <div
-            className="lg:hidden fixed inset-0 bg-black/50 z-40"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
-
-        <aside className={`
-          fixed lg:relative inset-y-0 left-0 z-50
-          w-[85vw] sm:w-[380px] lg:w-[var(--sidebar-width)]
-          flex-shrink-0 flex flex-col
-          border-r border-[var(--border)] bg-white
-          transform transition-transform duration-300 ease-in-out
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}>
-          <header className="hidden lg:flex h-[var(--header-height)] items-center px-6 border-b border-[var(--border-light)]">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900 leading-tight">J-REIT Analytics</h1>
-                <p className="text-xs text-gray-500">建物検索・分析システム</p>
-              </div>
-            </div>
-          </header>
-
-          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <span className="text-sm font-medium text-gray-700">検索・フィルター</span>
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="p-1.5 hover:bg-gray-100 rounded-lg"
-            >
-              <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="p-4 lg:p-5 border-b border-[var(--border-light)]">
-            <SearchPanel onSearch={handleSearch} isLoading={isPending} />
+      <div className="h-screen w-screen flex overflow-hidden bg-white">
+        {/* Left Pane: 検索フィルター - 280px fixed */}
+        <aside className="w-[280px] flex-shrink-0 flex flex-col border-r border-[#E0E0E0]">
+          <div className="flex-1 flex flex-col p-6">
+            <SearchPanel
+              onSearch={handleSearch}
+              onReset={handleReset}
+              isLoading={isPending}
+            />
           </div>
 
           {error && (
-            <div className="mx-4 lg:mx-5 mt-4 p-3 bg-red-50 border border-red-100 rounded-lg">
+            <div className="mx-6 mb-6 p-3 bg-red-50 border border-red-100 rounded">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
-
-          <div className="flex-1 flex flex-col min-h-0">
-            {isPending && (
-              <div className="flex-1 flex items-center justify-center">
-                <LoadingState message="検索中..." />
-              </div>
-            )}
-
-            {!isPending && hasSearched && (
-              <>
-                <div className="px-4 lg:px-5 py-4 border-b border-[var(--border-light)]">
-                  <StatsPanel buildings={buildings} />
-                </div>
-                <div className="flex-1 overflow-hidden">
-                  <BuildingList
-                    buildings={buildings}
-                    selectedId={selectedBuildingId}
-                    onSelect={handleBuildingSelect}
-                    onDetail={handleBuildingDetail}
-                  />
-                </div>
-              </>
-            )}
-
-            {!isPending && !hasSearched && (
-              <div className="flex-1 flex items-center justify-center p-6">
-                <div className="text-center max-w-xs">
-                  <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-1">建物を検索</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">
-                    キーワードやアセットタイプで建物を検索し、地図上で確認できます
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
         </aside>
 
-        <main className="flex-1 flex flex-col min-w-0 p-2 sm:p-4 gap-2 sm:gap-4 pt-0 lg:pt-4">
-          <div className="flex-1 min-h-[300px] lg:min-h-0 card overflow-hidden">
-            <ErrorBoundary
-              fallback={
-                <div className="h-full flex items-center justify-center bg-gray-50">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500">マップの読み込みに失敗しました</p>
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="mt-2 text-sm text-blue-600 hover:underline"
-                    >
-                      再読み込み
-                    </button>
-                  </div>
-                </div>
-              }
-            >
-              <BuildingMap
-                buildings={buildings}
-                selectedId={selectedBuildingId}
-                onMarkerClick={handleBuildingSelect}
-              />
-            </ErrorBoundary>
+        {/* Middle Pane: 検索結果リスト - 340px fixed */}
+        <div className="w-[340px] flex-shrink-0 flex flex-col border-r border-[#E0E0E0] overflow-hidden">
+          {isPending ? (
+            <div className="flex-1 flex items-center justify-center">
+              <LoadingState message="検索中..." />
+            </div>
+          ) : (
+            <BuildingList
+              buildings={buildings}
+              selectedId={selectedBuildingId}
+              onBuildingClick={handleBuildingClick}
+              onBuildingSelect={handleBuildingSelect}
+              hasSearched={hasSearched}
+            />
+          )}
+        </div>
+
+        {/* Right Pane: メインコンテンツ（マップ/分析） - flex: 1 */}
+        <main className="flex-1 relative min-w-0">
+          {/* セグメンテッドコントロール（オーバーレイ） */}
+          <div className="absolute top-4 right-4 z-10">
+            <div className="flex bg-white rounded-lg shadow-md overflow-hidden">
+              <button
+                onClick={() => setActiveTab('map')}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'map'
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                地図
+              </button>
+              <button
+                onClick={() => setActiveTab('analysis')}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'analysis'
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                分析
+              </button>
+            </div>
           </div>
 
-          {hasSearched && buildings.length > 0 && (
-            <div className="flex-shrink-0">
-              <AnalyticsPanel
-                buildings={buildings}
-                isExpanded={showAnalytics}
-                onToggle={() => setShowAnalytics(!showAnalytics)}
-              />
-            </div>
-          )}
+          {/* コンテンツエリア */}
+          <div className="h-full w-full">
+            {activeTab === 'map' ? (
+              <ErrorBoundary
+                fallback={
+                  <div className="h-full flex items-center justify-center bg-gray-50">
+                    <div className="text-center">
+                      <p className="text-sm text-[#757575]">マップの読み込みに失敗しました</p>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="mt-2 text-sm text-[#2F54EB] hover:underline"
+                      >
+                        再読み込み
+                      </button>
+                    </div>
+                  </div>
+                }
+              >
+                <BuildingMap
+                  buildings={buildings}
+                  selectedId={selectedBuildingId}
+                  onMarkerClick={handleMarkerClick}
+                />
+              </ErrorBoundary>
+            ) : (
+              <div className="h-full p-6 overflow-auto bg-gray-50">
+                <AnalyticsPanel buildings={buildings} />
+              </div>
+            )}
+          </div>
         </main>
 
+        {/* 詳細モーダル */}
         {selectedBuilding && (
           <BuildingDetailModal
             building={selectedBuilding}

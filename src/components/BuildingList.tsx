@@ -1,114 +1,189 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import type { Building } from '@/types';
-import { getAssetTypeLabels } from '@/lib';
+import { getAssetTypeLabels, formatPrice } from '@/lib';
 
 interface BuildingListProps {
   buildings: Building[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  onDetail?: (id: string) => void;
+  selectedId?: string | null;
+  onBuildingClick?: (id: string) => void;
+  onBuildingSelect?: (id: string) => void;
+  hasSearched?: boolean;
 }
 
-export function BuildingList({ buildings, selectedId, onSelect, onDetail }: BuildingListProps) {
+function formatDate(dateString: string): string {
+  const [year, month, day] = dateString.split('-');
+  return `${year}/${month}/${day}`;
+}
+
+function formatPriceInOku(price: number): string {
+  if (price >= 100000000) {
+    const oku = Math.floor(price / 100000000);
+    return `${oku}億円`;
+  }
+  if (price >= 10000000) {
+    const man = Math.floor(price / 10000);
+    return `${man.toLocaleString()}万円`;
+  }
+  return formatPrice(price);
+}
+
+const ITEM_HEIGHT = 168;
+
+export function BuildingList({
+  buildings,
+  selectedId,
+  onBuildingClick,
+  onBuildingSelect,
+  hasSearched = false,
+}: BuildingListProps) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: buildings.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+    overscan: 5,
+  });
+
+  // Scroll to selected building
+  useEffect(() => {
+    if (selectedId && parentRef.current) {
+      const index = buildings.findIndex((b) => b.id === selectedId);
+      if (index !== -1) {
+        virtualizer.scrollToIndex(index, { align: 'center', behavior: 'smooth' });
+      }
+    }
+  }, [selectedId, buildings, virtualizer]);
+
+  // Empty state
   if (buildings.length === 0) {
     return (
       <div className="h-full flex items-center justify-center p-6">
         <div className="text-center">
-          <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
-            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <p className="text-sm text-gray-500">該当する建物がありません</p>
-          <p className="text-xs text-gray-400 mt-1">検索条件を変更してください</p>
+          <svg
+            className="w-12 h-12 text-[#E0E0E0] mx-auto mb-3"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            />
+          </svg>
+          <p className="text-[#757575] text-sm">
+            {hasSearched ? '検索条件に一致する建物がありません' : '左のパネルから検索してください'}
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto" role="listbox" aria-label="建物一覧">
-      <div className="px-3 py-2">
-        {buildings.map((building, index) => {
-          const isSelected = building.id === selectedId;
+    <div ref={parentRef} className="h-full overflow-y-auto">
+      <div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const building = buildings[virtualRow.index];
           const assetTypes = getAssetTypeLabels(building.assetType);
+          const latestOccupancy =
+            building.financials.length > 0
+              ? building.financials[building.financials.length - 1].leasing.occupancyRate
+              : '-';
+          const isSelected = building.id === selectedId;
 
           return (
             <div
               key={building.id}
-              role="option"
-              aria-selected={isSelected}
-              className={`
-                p-3 rounded-lg mb-1.5 transition-all duration-150
-                ${isSelected
-                  ? 'bg-blue-50 border-2 border-blue-200 shadow-sm'
-                  : 'bg-white border border-transparent hover:bg-gray-50 hover:border-gray-100'
-                }
-              `}
-              style={{ animationDelay: `${index * 30}ms` }}
+              className="absolute top-0 left-0 right-0"
+              style={{
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
             >
-              <button
-                onClick={() => onSelect(building.id)}
-                className="w-full text-left"
-                aria-label={`${building.buildingSpec.name}を選択`}
+              <div
+                className={`mx-4 py-4 border-b border-[#E0E0E0] cursor-pointer transition-colors ${
+                  isSelected ? 'bg-blue-50 -mx-0 px-4' : 'hover:bg-gray-50'
+                }`}
+                onClick={() => onBuildingSelect?.(building.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onBuildingSelect?.(building.id);
+                  }
+                }}
               >
-                <div className="flex items-start gap-3">
-                  <div className={`
-                    w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 text-xs font-semibold
-                    ${isSelected ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}
-                  `}>
-                    {index + 1}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <h4 className={`text-sm font-medium truncate ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
-                      {building.buildingSpec.name}
-                    </h4>
-                    <p className="text-xs text-gray-500 truncate mt-0.5">
-                      {building.buildingSpec.address}
-                    </p>
-
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {assetTypes.slice(0, 2).map((type) => (
-                        <span
-                          key={type}
-                          className="inline-block px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 rounded"
-                        >
-                          {type}
-                        </span>
-                      ))}
-                      {assetTypes.length > 2 && (
-                        <span className="inline-block px-1.5 py-0.5 text-[10px] text-gray-400">
-                          +{assetTypes.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="text-right flex-shrink-0">
-                    <div className={`text-sm font-semibold ${isSelected ? 'text-blue-600' : 'text-gray-900'}`}>
-                      {building.yieldEvaluation.capRate}%
-                    </div>
-                    <div className="text-[10px] text-gray-400">CR</div>
-                  </div>
+                {/* ヘッダー部: タイトル + 外部リンクアイコン */}
+                <div className="mb-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onBuildingClick?.(building.id);
+                    }}
+                    className="text-[#2F54EB] hover:underline font-medium text-sm flex items-center gap-1 text-left"
+                  >
+                    {building.buildingSpec.name}
+                    <svg
+                      className="w-3.5 h-3.5 flex-shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </button>
                 </div>
-              </button>
 
-              {isSelected && onDetail && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDetail(building.id);
-                  }}
-                  className="mt-2 w-full py-1.5 text-xs font-medium text-blue-600 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors flex items-center justify-center gap-1"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                {/* サブタイトル: 建物アイコン + アセットタイプ */}
+                <div className="flex items-center gap-1.5 text-xs text-[#757575] mb-3">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
                   </svg>
-                  詳細を見る
-                </button>
-              )}
+                  <span>{assetTypes[0] || 'その他'}</span>
+                </div>
+
+                {/* データ明細部（2カラムGrid） */}
+                <div className="grid grid-cols-2 gap-y-1.5 text-xs">
+                  <div className="text-[#757575]">初回取得日</div>
+                  <div className="text-[#333333]">
+                    {formatDate(building.acquisition.acquisitionDate)}
+                  </div>
+
+                  <div className="text-[#757575]">最新鑑定CR</div>
+                  <div className="text-[#333333]">{building.yieldEvaluation.capRate}%</div>
+
+                  <div className="text-[#757575]">最新鑑定評価額</div>
+                  <div className="text-[#333333]">
+                    {formatPriceInOku(building.yieldEvaluation.appraisedPrice)}
+                  </div>
+
+                  <div className="text-[#757575]">現在の稼働率</div>
+                  <div className="text-[#333333]">{latestOccupancy}%</div>
+                </div>
+              </div>
             </div>
           );
         })}
