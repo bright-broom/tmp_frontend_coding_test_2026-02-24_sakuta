@@ -8,3 +8,4 @@ export {
   useDeviceType,
   type BreakpointKey,
 } from './useMediaQuery';
+export { useFocusTrap } from './useFocusTrap';
