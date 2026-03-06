@@ -42,15 +42,20 @@ export function AnalyticsPanel({ buildings }: AnalyticsPanelProps) {
 
   if (buildings.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="h-full flex items-center justify-center animate-fade-in">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-white shadow-lg flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
+          <div className="relative w-20 h-20 mx-auto mb-5">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 animate-pulse" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="w-10 h-10 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
           </div>
-          <h3 className="text-base font-medium text-gray-900 mb-1">分析データがありません</h3>
-          <p className="text-sm text-gray-500">左のパネルから建物を検索してください</p>
+          <h3 className="text-base font-semibold text-gray-900 mb-2">分析データを表示</h3>
+          <p className="text-sm text-gray-500 max-w-[240px] mx-auto">
+            左パネルで物件を検索すると、キャップレートと稼働率の推移グラフが表示されます
+          </p>
         </div>
       </div>
     );

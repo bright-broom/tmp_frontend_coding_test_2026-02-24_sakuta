@@ -30,7 +30,7 @@ function formatPriceInOku(price: number): string {
   return formatPrice(price);
 }
 
-const ITEM_HEIGHT = 168;
+const ITEM_HEIGHT = 180;
 
 // Memoized building card component
 const BuildingCard = memo(function BuildingCard({
@@ -38,17 +38,19 @@ const BuildingCard = memo(function BuildingCard({
   isSelected,
   onSelect,
   onClick,
+  index,
 }: {
   building: Building;
   isSelected: boolean;
   onSelect: () => void;
   onClick: () => void;
+  index: number;
 }) {
   const assetTypes = getAssetTypeLabels(building.assetType);
   const latestOccupancy =
     building.financials.length > 0
-      ? building.financials[building.financials.length - 1].leasing.occupancyRate
-      : '-';
+      ? parseFloat(building.financials[building.financials.length - 1].leasing.occupancyRate)
+      : null;
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -68,79 +70,78 @@ const BuildingCard = memo(function BuildingCard({
     [onClick]
   );
 
+  const getOccupancyColor = (rate: number | null) => {
+    if (rate === null) return 'text-gray-400';
+    if (rate >= 95) return 'text-emerald-600';
+    if (rate >= 85) return 'text-amber-600';
+    return 'text-red-500';
+  };
+
   return (
     <div
-      className={`mx-4 py-4 border-b border-[#E0E0E0] cursor-pointer transition-colors ${
-        isSelected ? 'bg-blue-50 -mx-0 px-4' : 'hover:bg-gray-50'
+      className={`relative mx-3 my-1.5 p-4 rounded-xl cursor-pointer transition-all duration-200 ${
+        isSelected
+          ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 ring-2 ring-blue-400 shadow-md'
+          : 'bg-white hover:bg-gray-50 hover:shadow-sm border border-gray-100'
       }`}
       onClick={onSelect}
       role="option"
       aria-selected={isSelected}
       tabIndex={isSelected ? 0 : -1}
       onKeyDown={handleKeyDown}
+      style={{ animationDelay: `${Math.min(index * 30, 150)}ms` }}
     >
-      {/* ヘッダー部: タイトル + 外部リンクアイコン */}
-      <div className="mb-1">
+      {/* ヘッダー部 */}
+      <div className="flex items-start justify-between gap-2 mb-2">
         <button
           onClick={handleClick}
-          className="text-[#2F54EB] hover:underline font-medium text-sm flex items-center gap-1 text-left focus-ring rounded"
+          className="text-gray-900 hover:text-blue-600 font-semibold text-sm text-left transition-colors focus-ring rounded group flex-1 min-w-0"
           aria-label={`${building.buildingSpec.name}の詳細を開く`}
         >
-          {building.buildingSpec.name}
-          <svg
-            className="w-3.5 h-3.5 flex-shrink-0"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-            />
-          </svg>
+          <span className="line-clamp-2 group-hover:underline">{building.buildingSpec.name}</span>
+        </button>
+        <button
+          onClick={handleClick}
+          className="flex-shrink-0 px-2 py-1 text-xs text-gray-400 hover:text-blue-600 transition-colors"
+          aria-label="詳細を開く"
+        >
+          詳細 →
         </button>
       </div>
 
-      {/* サブタイトル: 建物アイコン + アセットタイプ */}
-      <div className="flex items-center gap-1.5 text-xs text-[#757575] mb-3">
-        <svg
-          className="w-3.5 h-3.5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-          />
-        </svg>
-        <span>{assetTypes[0] || 'その他'}</span>
+      {/* アセットタイプバッジ */}
+      <div className="mb-3">
+        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-medium rounded">
+          {assetTypes[0] || 'その他'}
+        </span>
       </div>
 
-      {/* データ明細部（2カラムGrid） */}
-      <dl className="grid grid-cols-2 gap-y-1.5 text-xs">
-        <dt className="text-[#757575]">初回取得日</dt>
-        <dd className="text-[#333333]">
-          {formatDate(building.acquisition.acquisitionDate)}
-        </dd>
+      {/* メトリクス */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-0.5">
+          <div className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">CR</div>
+          <div className="text-sm font-bold text-blue-600">{building.yieldEvaluation.capRate}%</div>
+        </div>
+        <div className="space-y-0.5">
+          <div className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">稼働率</div>
+          <div className={`text-sm font-bold ${getOccupancyColor(latestOccupancy)}`}>
+            {latestOccupancy !== null ? `${latestOccupancy}%` : '-'}
+          </div>
+        </div>
+        <div className="space-y-0.5">
+          <div className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">評価額</div>
+          <div className="text-sm font-semibold text-gray-700">{formatPriceInOku(building.yieldEvaluation.appraisedPrice)}</div>
+        </div>
+        <div className="space-y-0.5">
+          <div className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">取得日</div>
+          <div className="text-sm text-gray-600">{formatDate(building.acquisition.acquisitionDate)}</div>
+        </div>
+      </div>
 
-        <dt className="text-[#757575]">最新鑑定CR</dt>
-        <dd className="text-[#333333]">{building.yieldEvaluation.capRate}%</dd>
-
-        <dt className="text-[#757575]">最新鑑定評価額</dt>
-        <dd className="text-[#333333]">
-          {formatPriceInOku(building.yieldEvaluation.appraisedPrice)}
-        </dd>
-
-        <dt className="text-[#757575]">現在の稼働率</dt>
-        <dd className="text-[#333333]">{latestOccupancy}%</dd>
-      </dl>
+      {/* 選択インジケーター */}
+      {isSelected && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-500 rounded-r-full" />
+      )}
     </div>
   );
 });
@@ -218,23 +219,17 @@ export const BuildingList = memo(function BuildingList({
     return (
       <div className="h-full flex items-center justify-center p-6" role="status">
         <div className="text-center">
-          <svg
-            className="w-12 h-12 text-[#E0E0E0] mx-auto mb-3"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-            />
-          </svg>
-          <p className="text-[#757575] text-sm">
-            {hasSearched ? '検索条件に一致する建物がありません' : '左のパネルから検索してください'}
-          </p>
+          {hasSearched ? (
+            <>
+              <p className="text-sm text-gray-600 mb-1">結果が見つかりません</p>
+              <p className="text-xs text-gray-400">条件を変更してください</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-600 mb-1">物件を検索</p>
+              <p className="text-xs text-gray-400">左パネルから検索してください</p>
+            </>
+          )}
         </div>
       </div>
     );
@@ -243,13 +238,13 @@ export const BuildingList = memo(function BuildingList({
   return (
     <div
       ref={parentRef}
-      className="h-full overflow-y-auto"
+      className="h-full overflow-y-auto custom-scrollbar bg-gray-50/50"
       role="listbox"
       aria-label={`建物リスト (${buildings.length}件)`}
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      <div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+      <div className="relative py-2" style={{ height: `${virtualizer.getTotalSize()}px` }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const building = buildings[virtualRow.index];
           const isSelected = building.id === selectedId;
@@ -268,6 +263,7 @@ export const BuildingList = memo(function BuildingList({
                 isSelected={isSelected}
                 onSelect={() => onBuildingSelect?.(building.id)}
                 onClick={() => onBuildingClick?.(building.id)}
+                index={virtualRow.index}
               />
             </div>
           );
