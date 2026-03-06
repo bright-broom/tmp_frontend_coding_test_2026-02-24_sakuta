@@ -15,6 +15,9 @@ export interface UseBuildingSearchReturn {
 const INITIAL_FILTERS: SearchFilters = {
   keyword: '',
   assetTypes: [],
+  occupancyRate: { min: '', max: '' },
+  appraisalPrice: { min: '', max: '' },
+  capRate: { min: '', max: '' },
 };
 
 const INITIAL_STATE: SearchState = {

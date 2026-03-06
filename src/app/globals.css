@@ -338,3 +338,394 @@ body {
 .animate-pulse {
   animation: pulse 2s ease-in-out infinite;
 }
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.2s ease-out;
+}
+
+.animate-slide-out-right {
+  animation: slideOutRight 0.2s ease-out forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Improved focus styles */
+.focus-ring {
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F54EB] focus-visible:ring-offset-2;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ===== Enhanced UI/UX Styles ===== */
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Enhanced card hover effects */
+.card-interactive {
+  @apply transition-all duration-200 ease-out;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
+
+.card-interactive:active {
+  transform: translateY(0);
+}
+
+/* Stagger animation for lists */
+@keyframes staggerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-animation {
+  animation: staggerFadeIn 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+.stagger-animation:nth-child(1) { animation-delay: 0ms; }
+.stagger-animation:nth-child(2) { animation-delay: 50ms; }
+.stagger-animation:nth-child(3) { animation-delay: 100ms; }
+.stagger-animation:nth-child(4) { animation-delay: 150ms; }
+.stagger-animation:nth-child(5) { animation-delay: 200ms; }
+
+/* Enhanced button hover effect */
+.btn-hover-lift {
+  @apply transition-all duration-150;
+}
+
+.btn-hover-lift:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-hover-lift:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Badge/Pill styles */
+.badge {
+  @apply inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full;
+}
+
+.badge-primary {
+  background: var(--primary-100);
+  color: var(--primary-700);
+}
+
+.badge-success {
+  background: var(--accent-100);
+  color: var(--accent-600);
+}
+
+.badge-count {
+  @apply min-w-[1.25rem] h-5 px-1.5 text-xs font-bold rounded-full;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* Enhanced input focus ring */
+.input-enhanced {
+  @apply transition-all duration-150;
+}
+
+.input-enhanced:focus {
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 3px var(--primary-100), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Stat card styles */
+.stat-card {
+  @apply relative overflow-hidden rounded-xl p-4;
+  background: linear-gradient(135deg, var(--gray-50), white);
+  border: 1px solid var(--gray-100);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary-500);
+}
+
+.stat-card-accent::before {
+  background: var(--accent-500);
+}
+
+/* Pulse indicator */
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+}
+
+.pulse-indicator {
+  @apply relative;
+}
+
+.pulse-indicator::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-500);
+  border-radius: 50%;
+  animation: pulseRing 2s ease-in-out infinite;
+}
+
+/* Keyboard shortcut hint */
+.kbd {
+  @apply inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium rounded;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  border: 1px solid var(--gray-200);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Section divider with gradient */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gray-200), transparent);
+}
+
+/* Smooth gradient border */
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--primary-400), var(--accent-400));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+/* Tab active indicator */
+.tab-active-indicator {
+  position: relative;
+}
+
+.tab-active-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: var(--primary-500);
+  border-radius: 1px;
+}
+
+/* Loading bar animation */
+@keyframes loadingBar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.loading-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: loadingBar 1.5s ease-in-out infinite;
+}
+
+/* Enhanced scrollbar for main content areas */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--gray-50);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 4px;
+  border: 2px solid var(--gray-50);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+/* Tooltip styles */
+.tooltip {
+  @apply invisible opacity-0 absolute z-50 px-2 py-1 text-xs font-medium text-white rounded-md whitespace-nowrap;
+  background: var(--gray-800);
+  transition: opacity 0.15s, visibility 0.15s;
+}
+
+.tooltip-trigger:hover .tooltip,
+.tooltip-trigger:focus .tooltip {
+  @apply visible opacity-100;
+}
+
+/* Empty state illustration placeholder */
+.empty-illustration {
+  @apply relative w-24 h-24 mx-auto mb-4;
+}
+
+.empty-illustration::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--gray-100), var(--gray-50));
+  border-radius: 50%;
+}
+
+/* Z-index layer system */
+:root {
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+}
+
+.z-modal {
+  z-index: var(--z-modal);
+}
+
+.z-modal-backdrop {
+  z-index: var(--z-modal-backdrop);
+}
+
+.z-toast {
+  z-index: var(--z-toast);
+}

@@ -1,32 +1,30 @@
 'use server';
 
 import buildingsData from '@/mocks/buildings.json';
-import type { Building, SearchFilters, AssetTypeKey } from '@/types';
+import type { Building, SearchFilters, BuildingsResponse, RangeFilter } from '@/types';
+import { filterBuildings, ERROR_MESSAGES } from '@/lib';
 
-export interface BuildingsResponse {
-  success: boolean;
-  data: Building[];
-  error?: string;
-  total: number;
+function isRangeFilterActive(range: RangeFilter): boolean {
+  return range.min !== '' || range.max !== '';
 }
 
-const SIMULATED_DELAY = 0;
-
-async function delay(ms: number): Promise<void> {
-  if (ms > 0) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+function hasActiveFilters(filters: SearchFilters): boolean {
+  return (
+    filters.keyword !== '' ||
+    filters.assetTypes.length > 0 ||
+    isRangeFilterActive(filters.occupancyRate) ||
+    isRangeFilterActive(filters.appraisalPrice) ||
+    isRangeFilterActive(filters.capRate)
+  );
 }
 
 export async function fetchBuildings(
   filters?: SearchFilters
 ): Promise<BuildingsResponse> {
   try {
-    await delay(SIMULATED_DELAY);
-
     const buildings = buildingsData.data.jReitBuildings as Building[];
 
-    if (!filters || (!filters.keyword && filters.assetTypes.length === 0)) {
+    if (!filters || !hasActiveFilters(filters)) {
       return {
         success: true,
         data: buildings,
@@ -34,27 +32,7 @@ export async function fetchBuildings(
       };
     }
 
-    const filtered = buildings.filter((building) => {
-      if (filters.keyword) {
-        const keyword = filters.keyword.toLowerCase();
-        const nameMatch = building.buildingSpec.name.toLowerCase().includes(keyword);
-        const addressMatch = building.buildingSpec.address.toLowerCase().includes(keyword);
-        if (!nameMatch && !addressMatch) {
-          return false;
-        }
-      }
-
-      if (filters.assetTypes.length > 0) {
-        const hasMatchingType = filters.assetTypes.some(
-          (assetType: AssetTypeKey) => building.assetType[assetType]
-        );
-        if (!hasMatchingType) {
-          return false;
-        }
-      }
-
-      return true;
-    });
+    const filtered = filterBuildings(buildings, filters);
 
     return {
       success: true,
@@ -67,7 +45,7 @@ export async function fetchBuildings(
       success: false,
       data: [],
       total: 0,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      error: error instanceof Error ? error.message : ERROR_MESSAGES.GENERIC,
     };
   }
 }

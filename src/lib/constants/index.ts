@@ -1,9 +1,21 @@
-/**
- * Application Constants
- * @module lib/constants
- */
-
 import type { AssetTypeKey } from '@/types';
+
+/**
+ * z-index階層設計
+ * - Leafletのポップアップ (z-index: 700) より上にモーダルを配置
+ * - 階層間に余裕を持たせ、将来の拡張に対応
+ */
+export const Z_INDEX = {
+  OVERLAY: 40,
+  SIDEBAR: 50,
+  DROPDOWN: 100,
+  STICKY: 200,
+  // Leaflet: popup=700, tooltip=650, marker=600
+  MODAL_BACKDROP: 900,
+  MODAL: 1000,
+  TOAST: 1100,
+  TOOLTIP: 1200,
+} as const;
 
 export const ASSET_TYPE_LABELS: Readonly<Record<AssetTypeKey, string>> = {
   isOffice: 'オフィス',

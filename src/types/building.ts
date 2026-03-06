@@ -105,9 +105,17 @@ export interface BuildingsResponse extends ApiResponse<Building[]> {
 
 export type BuildingResponse = ApiResponse<Building | null>;
 
+export interface RangeFilter {
+  min: string;
+  max: string;
+}
+
 export interface SearchFilters {
   keyword: string;
   assetTypes: AssetTypeKey[];
+  occupancyRate: RangeFilter;
+  appraisalPrice: RangeFilter;
+  capRate: RangeFilter;
 }
 
 export interface SearchResult {

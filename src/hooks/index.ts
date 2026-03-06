@@ -8,3 +8,6 @@ export {
   useDeviceType,
   type BreakpointKey,
 } from './useMediaQuery';
+export { useFocusTrap } from './useFocusTrap';
+export { useDebounce, useDebouncedCallback } from './useDebounce';
+export { useKeyboardNavigation, useKeyboardShortcut } from './useKeyboardNavigation';

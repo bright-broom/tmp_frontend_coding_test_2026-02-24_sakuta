@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import type { Building } from '@/types';
 import {
   formatPrice,
@@ -8,6 +8,7 @@ import {
   formatDateJP,
   getAssetTypeLabels,
 } from '@/lib';
+import { useFocusTrap } from '@/hooks';
 
 interface BuildingDetailModalProps {
   building: Building | null;
@@ -15,9 +16,20 @@ interface BuildingDetailModalProps {
 }
 
 export function BuildingDetailModal({ building, onClose }: BuildingDetailModalProps) {
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(!!building);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+      setIsClosing(false);
+    }, 200);
   }, [onClose]);
+
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') handleClose();
+  }, [handleClose]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleEscape);
@@ -32,67 +44,72 @@ export function BuildingDetailModal({ building, onClose }: BuildingDetailModalPr
 
   const assetTypes = getAssetTypeLabels(building.assetType);
   const latestOccupancy = building.financials.length > 0
-    ? building.financials[building.financials.length - 1].leasing.occupancyRate
+    ? parseFloat(building.financials[building.financials.length - 1].leasing.occupancyRate)
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div
+      ref={focusTrapRef}
+      className={`fixed inset-0 z-modal flex items-center justify-center p-4 ${isClosing ? 'pointer-events-none' : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="building-detail-title"
+    >
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
-        onClick={onClose}
+        className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'animate-fade-in'}`}
+        onClick={handleClose}
+        aria-hidden="true"
       />
 
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden animate-slide-in-up">
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-start justify-between">
+      <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden transition-all duration-200 ${isClosing ? 'opacity-0 scale-95' : 'animate-slide-in-up'}`}>
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-start justify-between">
           <div className="flex-1 min-w-0 pr-4">
-            <h2 className="text-xl font-bold text-gray-900 truncate">
+            <h2 id="building-detail-title" className="text-lg font-bold text-gray-900 truncate mb-1">
               {building.buildingSpec.name}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {building.buildingSpec.address}
-            </p>
+            <p className="text-sm text-gray-500">{building.buildingSpec.address}</p>
           </div>
           <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-            aria-label="閉じる"
+            onClick={handleClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 text-gray-400 hover:text-gray-600"
+            aria-label="閉じる (Escキー)"
           >
-            <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            ✕
           </button>
         </div>
 
-        <div className="overflow-y-auto p-6 space-y-6">
+        <div className="overflow-y-auto p-6 space-y-6 custom-scrollbar">
+          {/* Asset Type Badges */}
           <div className="flex flex-wrap gap-2">
             {assetTypes.map((type) => (
               <span
                 key={type}
-                className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full"
+                className="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded"
               >
                 {type}
               </span>
             ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">
+          {/* Key Metrics Cards */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-gray-50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-gray-900">
                 {building.yieldEvaluation.capRate}%
               </div>
-              <div className="text-xs text-blue-600/70 mt-1">最新キャップレート</div>
+              <div className="text-xs text-gray-500 mt-1">最新CR</div>
             </div>
-            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold text-emerald-600">
+            <div className="bg-gray-50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-gray-900">
                 {latestOccupancy ? `${latestOccupancy}%` : '-'}
               </div>
-              <div className="text-xs text-emerald-600/70 mt-1">最新稼働率</div>
+              <div className="text-xs text-gray-500 mt-1">最新稼働率</div>
             </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600">
+            <div className="bg-gray-50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-gray-900">
                 {building.acquisition.initialCapRate}%
               </div>
-              <div className="text-xs text-purple-600/70 mt-1">取得時CR</div>
+              <div className="text-xs text-gray-500 mt-1">取得時CR</div>
             </div>
           </div>
 
@@ -209,12 +226,16 @@ export function BuildingDetailModal({ building, onClose }: BuildingDetailModalPr
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 px-6 py-4">
+        <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent border-t border-gray-100 px-6 py-4">
           <button
-            onClick={onClose}
-            className="w-full btn-primary"
+            onClick={handleClose}
+            className="w-full py-3 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
           >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
             閉じる
+            <kbd className="ml-2 px-1.5 py-0.5 bg-gray-700 text-gray-300 text-[10px] rounded">Esc</kbd>
           </button>
         </div>
       </div>
