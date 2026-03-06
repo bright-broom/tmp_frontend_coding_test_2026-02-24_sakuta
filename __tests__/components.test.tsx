@@ -89,7 +89,7 @@ describe('SearchPanel', () => {
 
     expect(screen.getByText('稼働率')).toBeInTheDocument();
     expect(screen.getByText('最新鑑定評価額')).toBeInTheDocument();
-    expect(screen.getByText('最新CR')).toBeInTheDocument();
+    expect(screen.getByText('最新キャップレート')).toBeInTheDocument();
   });
 
   it('renders search button', () => {
@@ -130,7 +130,7 @@ describe('SearchPanel', () => {
     const mockOnReset = jest.fn();
     render(<SearchPanel onSearch={mockOnSearch} onReset={mockOnReset} />);
 
-    expect(screen.getByText('検索結果をリセット')).toBeInTheDocument();
+    expect(screen.getByText('リセット')).toBeInTheDocument();
   });
 
   it('calls onReset when reset button is clicked', () => {
@@ -138,7 +138,11 @@ describe('SearchPanel', () => {
     const mockOnReset = jest.fn();
     render(<SearchPanel onSearch={mockOnSearch} onReset={mockOnReset} />);
 
-    const resetButton = screen.getByText('検索結果をリセット');
+    // First, add a filter value to enable the reset button
+    const minInput = screen.getByLabelText('稼働率の最小値');
+    fireEvent.change(minInput, { target: { value: '50' } });
+
+    const resetButton = screen.getByText('リセット');
     fireEvent.click(resetButton);
 
     expect(mockOnReset).toHaveBeenCalled();
@@ -252,7 +256,7 @@ describe('BuildingList', () => {
       />
     );
 
-    expect(screen.getByText('左のパネルから検索してください')).toBeInTheDocument();
+    expect(screen.getByText('物件を検索')).toBeInTheDocument();
   });
 
   it('shows no results message when searched but no buildings found', () => {
@@ -267,7 +271,7 @@ describe('BuildingList', () => {
       />
     );
 
-    expect(screen.getByText('検索条件に一致する建物がありません')).toBeInTheDocument();
+    expect(screen.getByText('結果が見つかりません')).toBeInTheDocument();
   });
 
   it('renders acquisition date', () => {
@@ -296,8 +300,8 @@ describe('BuildingList', () => {
       />
     );
 
-    // Selected building should have bg-blue-50 class
-    const selectedElement = container.querySelector('.bg-blue-50');
+    // Selected building should have from-blue-50 class (gradient)
+    const selectedElement = container.querySelector('.from-blue-50');
     expect(selectedElement).toBeInTheDocument();
   });
 });
